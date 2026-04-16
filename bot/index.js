@@ -133,6 +133,6 @@ bot.on('text', (ctx) => {
 
 bot.action("start", sendStartMenu);
 
-bot.launch();
+// bot.launch(); // Removed for Vercel serverless compatibility - using webhooks instead
 
 module.exports = bot;
