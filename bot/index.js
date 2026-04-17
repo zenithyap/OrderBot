@@ -166,17 +166,17 @@ const sendLifeIsToughMenu = async (ctx) => {
 
 bot.action("eeveelutions", async (ctx) => {
   await ctx.answerCbQuery();
-  return sendEeveelutionsMenu(ctx);
+  return await sendEeveelutionsMenu(ctx);
 });
 
 bot.action("about_the_journey", async (ctx) => {
   await ctx.answerCbQuery();
-  return sendAboutTheJourneyMenu(ctx);
+  return await sendAboutTheJourneyMenu(ctx);
 });
 
 bot.action("life_is_tough", async (ctx) => {
   await ctx.answerCbQuery();
-  return sendLifeIsToughMenu(ctx);
+  return await sendLifeIsToughMenu(ctx);
 });
 
 bot.action(/^select_([^|]+)\|(.+)$/, async (ctx) => {
@@ -196,7 +196,7 @@ bot.action(/^select_([^|]+)\|(.+)$/, async (ctx) => {
     ? `Order Summary:\n${summary}\n\nHow many ${item} stickers would you like?`
     : `How many ${item} stickers would you like?`;
 
-  return ctx.editMessageText(text, {
+  return await ctx.editMessageText(text, {
     reply_markup: {
       inline_keyboard: [
         [
@@ -225,7 +225,7 @@ bot.action(/^qty_(\d+)$/, async (ctx) => {
   const qty = Number(ctx.match[1]);
   const selection = pendingSelections.get(ctx.from.id);
   if (!selection || !selection.item) {
-    return ctx.reply("Please select a sticker first.");
+    return await ctx.reply("Please select a sticker first.");
   }
 
   const selections = userSelections.get(ctx.from.id) || {};
@@ -238,21 +238,21 @@ bot.action(/^qty_(\d+)$/, async (ctx) => {
     .map(([eevee, qty]) => `- ${eevee}: ${qty} stickers`)
     .join("\n");
 
-  await ctx.editMessageText(
+  return await ctx.editMessageText(
     `Order Summary:\n${summary}\n\nThank you! Returning to your sticker pack menu...`,
   );
 
   const packKey = selection.pack;
-  if (packKey === "eeveelutions") return sendEeveelutionsMenu(ctx);
-  if (packKey === "about_the_journey") return sendAboutTheJourneyMenu(ctx);
-  if (packKey === "life_is_tough") return sendLifeIsToughMenu(ctx);
-  return sendStartMenu(ctx);
+  if (packKey === "eeveelutions") return await sendEeveelutionsMenu(ctx);
+  if (packKey === "about_the_journey") return await sendAboutTheJourneyMenu(ctx);
+  if (packKey === "life_is_tough") return await sendLifeIsToughMenu(ctx);
+  return await sendStartMenu(ctx);
 });
 
 bot.command("clearorder", async (ctx) => {
   userSelections.delete(ctx.from.id);
   pendingSelections.delete(ctx.from.id);
-  await ctx.reply("Your order has been cleared.");
+  return await ctx.reply("Your order has been cleared.");
 });
 
 bot.start(sendStartMenu);
