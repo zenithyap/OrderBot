@@ -21,28 +21,7 @@ const sendStartMenu = (ctx) =>
   });
 
 const sendEeveelutionsMenu = async (ctx) => {
-  if (!eeveelutionFileIds) {
-    const message = await ctx.replyWithMediaGroup(
-      eevees.map((eevee) => ({
-        type: "photo",
-        media: {
-          source: path.join(__dirname, `../images/eeveelutions/${eevee}.webp`),
-        },
-        caption: `${eevee} sticker preview`,
-      }))
-    );
-    eeveelutionFileIds = message.map(m => m.photo[0].file_id);
-  } else {
-    await ctx.replyWithMediaGroup(
-      eeveelutionFileIds.map((fileId, index) => ({
-        type: "photo",
-        media: fileId,
-        caption: `${eevees[index]} sticker preview`,
-      }))
-    );
-  }
-
-  return ctx.reply("Which Eeveelution sticker would you like?", {
+  const menu = {
     reply_markup: {
       inline_keyboard: [
         [
@@ -63,13 +42,20 @@ const sendEeveelutionsMenu = async (ctx) => {
         [{ text: "Back", callback_data: "customCrafts" }],
       ],
     },
-  });
+  };
+
+  if (ctx.updateType === "callback_query" || ctx.callbackQuery) {
+    return ctx.editMessageText("Which Eeveelution sticker would you like?", menu);
+  }
+
+  return ctx.reply("Which Eeveelution sticker would you like?", menu);
 };
 
 bot.start(sendStartMenu);
 
-bot.action("customCrafts", (ctx) =>
-  ctx.reply(
+bot.action("customCrafts", async (ctx) => {
+  await ctx.answerCbQuery();
+  return ctx.editMessageText(
     "You selected Custom Crafts @so.art.z! Please select which sticker pack you would like!",
     {
       reply_markup: {
@@ -80,9 +66,9 @@ bot.action("customCrafts", (ctx) =>
           [{ text: "Back", callback_data: "start" }],
         ],
       },
-    },
-  ),
-);
+    }
+  );
+});
 
 const eevees = [
   "Eevee",
@@ -96,13 +82,19 @@ const eevees = [
   "Sylveon",
 ]
 
-bot.action("eeveelutions", sendEeveelutionsMenu);
+bot.action("eeveelutions", async (ctx) => {
+  await ctx.answerCbQuery();
+  // await ctx.editMessageText("Loading Eeveelutions...", { reply_markup: { inline_keyboard: [] } });
+  return sendEeveelutionsMenu(ctx);
+});
 
-
-bot.action(/^select_(.+)$/, (ctx) => {
+bot.action(/^select_(.+)$/, async (ctx) => {
+  await ctx.answerCbQuery();
   const eevee = ctx.match[1].charAt(0).toUpperCase() + ctx.match[1].slice(1);
   pendingSelections.set(ctx.from.id, eevee);
-  ctx.reply(`How many ${eevee} stickers would you like? Please enter a number.`);
+  return ctx.editMessageText(`How many ${eevee} stickers would you like? Please enter a number.`, {
+    reply_markup: { inline_keyboard: [] },
+  });
 });
 
 bot.command('clearorder', (ctx) => {
@@ -112,14 +104,14 @@ bot.command('clearorder', (ctx) => {
 });
 
 bot.on('text', (ctx) => {
+  const item = pendingSelections.get(ctx.from.id);
+  if (!item) {
+    return; // Ignore if no pending
+  }
   const text = ctx.message.text;
   const num = parseInt(text);
   if (isNaN(num) || num <= 0) {
     return ctx.reply('Please enter a valid number greater than 0.');
-  }
-  const item = pendingSelections.get(ctx.from.id);
-  if (!item) {
-    return; // Ignore if no pending
   }
   const selections = userSelections.get(ctx.from.id) || {};
   selections[item] = (selections[item] || 0) + num;
@@ -131,7 +123,17 @@ bot.on('text', (ctx) => {
   sendEeveelutionsMenu(ctx);
 });
 
-bot.action("start", sendStartMenu);
+bot.action("start", async (ctx) => {
+  await ctx.answerCbQuery();
+  return ctx.editMessageText("Welcome to OrderBot! Please select an option", {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "ALL THINGS TCG", callback_data: "allThingsTcg" }],
+        [{ text: "Custom Crafts @so.art.z", callback_data: "customCrafts" }],
+      ],
+    },
+  });
+});
 
 // bot.launch(); // Removed for Vercel serverless compatibility - using webhooks instead
 
