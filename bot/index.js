@@ -147,21 +147,27 @@ const sendEeveelutionsMenu = async (ctx) => {
     ? `Order Summary:\n${summary}\n\nWhich Eeveelution sticker would you like?`
     : "Which Eeveelution sticker would you like?";
 
-  return ctx.editMessageText(text, eeveelutionsMenu);
+  return await ctx.editMessageText(text, eeveelutionsMenu);
 };
 
 const sendAboutTheJourneyMenu = async (ctx) => {
-  return ctx.editMessageText(
-    "Remember to enjoy the journey!",
-    aboutTheJourneyMenu,
-  );
+  const selections = userSelections.get(ctx.from.id) || {};
+  const summary = formatOrderSummary(selections);
+  const text = summary
+    ? `Order Summary:\n${summary}\n\nRemember to enjoy the journey!`
+    : "Remember to enjoy the journey!";
+
+  return await ctx.editMessageText(text, aboutTheJourneyMenu);
 };
 
 const sendLifeIsToughMenu = async (ctx) => {
-  return ctx.editMessageText(
-    "Life can be tough, but these stickers will help you express yourself!",
-    lifeIsToughMenu,
-  );
+  const selections = userSelections.get(ctx.from.id) || {};
+  const summary = formatOrderSummary(selections);
+  const text = summary
+    ? `Order Summary:\n${summary}\n\nLife can be tough, but these stickers will help you express yourself!`
+    : "Life can be tough, but these stickers will help you express yourself!";
+
+  return await ctx.editMessageText(text, lifeIsToughMenu);
 };
 
 bot.action("eeveelutions", async (ctx) => {
