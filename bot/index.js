@@ -256,6 +256,6 @@ bot.command("clearorder", async (ctx) => {
 });
 
 bot.start(sendStartMenu);
-bot.launch(); // Removed for Vercel serverless compatibility - using webhooks instead
+// bot.launch(); // Removed for Vercel serverless compatibility - using webhooks instead
 
 module.exports = bot;
