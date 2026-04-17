@@ -238,7 +238,7 @@ bot.action(/^qty_(\d+)$/, async (ctx) => {
     .map(([eevee, qty]) => `- ${eevee}: ${qty} stickers`)
     .join("\n");
 
-  return await ctx.editMessageText(
+  await ctx.editMessageText(
     `Order Summary:\n${summary}\n\nThank you! Returning to your sticker pack menu...`,
   );
 
