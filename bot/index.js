@@ -103,7 +103,7 @@ bot.command('clearorder', (ctx) => {
   ctx.reply('Your order has been cleared.');
 });
 
-bot.on('text', (ctx) => {
+bot.on('text', async (ctx) => {
   const item = pendingSelections.get(ctx.from.id);
   if (!item) {
     return; // Ignore if no pending
@@ -119,8 +119,8 @@ bot.on('text', (ctx) => {
   pendingSelections.delete(ctx.from.id);
 
   const summary = Object.entries(selections).map(([eevee, qty]) => `- ${eevee}: ${qty} stickers`).join('\n');
-  ctx.reply(`Order Summary:\n${summary}\n\nThank you! Returning to Eeveelutions menu...`);
-  sendEeveelutionsMenu(ctx);
+  await ctx.reply(`Order Summary:\n${summary}\n\nThank you! Returning to Eeveelutions menu...`);
+  await sendEeveelutionsMenu(ctx);
 });
 
 bot.action("start", async (ctx) => {
