@@ -1,6 +1,5 @@
 const { Telegraf } = require("telegraf");
 require("dotenv").config();
-const path = require("path");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const userSelections = new Map(); // userId -> { 'Eevee': 10, 'Vaporeon': 5 }
@@ -120,15 +119,15 @@ const sendStartMenu = async (ctx) => {
   await ctx.sendMediaGroup([
     {
       type: "photo",
-      media: { source: path.join(__dirname, "../images/eeveelutions/eeveelutions.JPG") },
+      media: "https://order-bot-ruby.vercel.app/images/eeveelutions/eeveelutions.JPG",
     },
     {
       type: "photo",
-      media: { source: path.join(__dirname, "../images/eeveelutions/about_the_journey.JPG") },
+      media: "https://order-bot-ruby.vercel.app/images/eeveelutions/about_the_journey.JPG",
     },
     {
       type: "photo",
-      media: { source: path.join(__dirname, "../images/eeveelutions/life_is_tough.JPG") },
+      media: "https://order-bot-ruby.vercel.app/images/eeveelutions/life_is_tough.JPG",
     },
   ]);
   await ctx.reply(text, startMenu);
