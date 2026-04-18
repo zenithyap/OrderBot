@@ -38,10 +38,11 @@ const menu = {
     name: "Life is Tough",
     options: [
       { name: "No motivation", id: "no_motivation" },
-      { name: "Werk tough", id: "werk_tough" },
-      { name: "Low batt", id: "low_batt" },
-      { name: "5 more mins", id: "5_more_mins" },
       { name: "Happy mask on", id: "happy_mask_on" },
+      { name: "Friday yet?", id: "friday_yet" },
+      { name: "5 more mins", id: "5_more_mins" },
+      { name: "Low batt", id: "low_batt" },
+      { name: "Werk tough", id: "werk_tough" },
     ],
   },
 };
@@ -78,6 +79,27 @@ const formatGrid = (gridRow, gridCol, options, packKey) => {
   return grid;
 };
 
+const getMenu = (userId, gridRow, gridCol, options, id, backId) => {
+  const inlineKeyboard = formatGrid(gridRow, gridCol, options, id).map((row) =>
+    row.map((option) => ({
+      text: option.text,
+      callback_data: option.callback_data,
+    })),
+  );
+  const selections = userSelections.get(userId) || {};
+  if (Object.keys(selections).length > 0) {
+    inlineKeyboard.push([
+      { text: "Clear Order 🗑️", callback_data: "clearorder" },
+      { text: "Checkout 🛒", callback_data: "checkout" },
+    ]);
+  }
+  if (backId) {
+    inlineKeyboard.push([{ text: "Back", callback_data: backId || "start" }]);
+  }
+
+  return { reply_markup: { inline_keyboard: inlineKeyboard } };
+};
+
 const startMenu = {
   reply_markup: {
     inline_keyboard: [
@@ -88,67 +110,28 @@ const startMenu = {
   },
 };
 
-const eeveelutionsMenu = {
-  reply_markup: {
-    inline_keyboard: formatGrid(
-      3,
-      3,
-      menu.eeveelutions.options,
-      menu.eeveelutions.id,
-    )
-      .map((row) =>
-        row.map((option) => ({
-          text: option.text,
-          callback_data: option.callback_data,
-        })),
-      )
-      .concat([[{ text: "Back", callback_data: "start" }]]),
-  },
-};
-
-const aboutTheJourneyMenu = {
-  reply_markup: {
-    inline_keyboard: formatGrid(
-      5,
-      1,
-      menu.aboutTheJourney.options,
-      menu.aboutTheJourney.id,
-    )
-      .map((row) =>
-        row.map((option) => ({
-          text: option.text,
-          callback_data: option.callback_data,
-        })),
-      )
-      .concat([[{ text: "Back", callback_data: "start" }]]),
-  },
-};
-
-const lifeIsToughMenu = {
-  reply_markup: {
-    inline_keyboard: formatGrid(
-      3,
-      3,
-      menu.lifeIsTough.options,
-      menu.lifeIsTough.id,
-    )
-      .map((row) =>
-        row.map((option) => ({
-          text: option.text,
-          callback_data: option.callback_data,
-        })),
-      )
-      .concat([[{ text: "Back", callback_data: "start" }]]),
-  },
-};
-
-const sendStartMenu = (ctx) => {
+const sendStartMenu = async (ctx) => {
   const selections = userSelections.get(ctx.from.id) || {};
   const text = addOrderSummary(
     selections,
     "Welcome to MorphyOrderBot! Please select which sticker pack you would like!",
   );
-  ctx.reply(text, startMenu);
+  await ctx.reply("Loading sticker packs...")
+  await ctx.sendMediaGroup([
+    {
+      type: "photo",
+      media: { source: path.join(__dirname, "../images/eeveelutions/eeveelutions.JPG") },
+    },
+    {
+      type: "photo",
+      media: { source: path.join(__dirname, "../images/eeveelutions/about_the_journey.JPG") },
+    },
+    {
+      type: "photo",
+      media: { source: path.join(__dirname, "../images/eeveelutions/life_is_tough.JPG") },
+    },
+  ]);
+  await ctx.reply(text, startMenu);
 };
 
 bot.action("start", async (ctx) => {
@@ -167,7 +150,17 @@ const sendEeveelutionsMenu = async (ctx) => {
     selections,
     "Which Eeveelution sticker would you like?",
   );
-  return await ctx.editMessageText(text, eeveelutionsMenu);
+  return await ctx.editMessageText(
+    text,
+    getMenu(
+      ctx.from.id,
+      3,
+      3,
+      menu.eeveelutions.options,
+      menu.eeveelutions.id,
+      "start",
+    ),
+  );
 };
 
 const sendAboutTheJourneyMenu = async (ctx) => {
@@ -176,7 +169,17 @@ const sendAboutTheJourneyMenu = async (ctx) => {
     selections,
     "Don't forget to enjoy the journey! Which 'About the Journey' sticker would you like?",
   );
-  return await ctx.editMessageText(text, aboutTheJourneyMenu);
+  return await ctx.editMessageText(
+    text,
+    getMenu(
+      ctx.from.id,
+      5,
+      1,
+      menu.aboutTheJourney.options,
+      menu.aboutTheJourney.id,
+      "start",
+    ),
+  );
 };
 
 const sendLifeIsToughMenu = async (ctx) => {
@@ -185,7 +188,17 @@ const sendLifeIsToughMenu = async (ctx) => {
     selections,
     "Life can be tough, but these stickers will help you express yourself! Which 'Life is Tough' sticker would you like?",
   );
-  return await ctx.editMessageText(text, lifeIsToughMenu);
+  return await ctx.editMessageText(
+    text,
+    getMenu(
+      ctx.from.id,
+      2,
+      3,
+      menu.lifeIsTough.options,
+      menu.lifeIsTough.id,
+      "start",
+    ),
+  );
 };
 
 bot.action(menu.eeveelutions.id, async (ctx) => {
@@ -212,7 +225,6 @@ bot.action(/^select_([^|]+)\|(.+)$/, async (ctx) => {
     ? pack.options.find((option) => option.id === itemKey)
     : null;
   const item = option ? option.name : itemKey;
-  console.log(itemKey, packKey);
 
   pendingSelections.set(ctx.from.id, { item, pack: packKey });
 
@@ -269,7 +281,6 @@ bot.action(/^qty_(\d+)$/, async (ctx) => {
       delete userSelections.get(ctx.from.id)[selection.item];
     pendingSelections.delete(ctx.from.id);
   } else {
-    console.log(selection);
     const item = selection.item;
     selections[item] = qty;
     userSelections.set(ctx.from.id, selections);
