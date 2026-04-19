@@ -334,7 +334,7 @@ bot.action("checkout", async (ctx) => {
   const selections = userSelections.get(ctx.from.id) || {};
   const text = addOrderSummary(
     selections,
-    "Would you like to self collect or have it delivered?\n\nFor meetups, the location will be either at <b><u>Lentor MRT</u></b> for <b><u>weekdays evenings</u></b> and <b><u>Yew tee MRT</u></b> for <b><u>weekends</u></b>. Payment can be settled on the day of meetup.\n\nFor delivery, there will be an <b><u>additional $2 delivery fee</u></b>. Please provide your address after confirming delivery.",
+    "Would you like to self collect or have it delivered?\n\nFor meetups, the location will be either at <b><u>Lentor MRT</u></b> for <b><u>weekdays evenings</u></b> or <b><u>Yew tee MRT</u></b> for <b><u>weekends</u></b>. Payment can be settled on the day of meetup.\n\nFor delivery, there will be an <b><u>additional $2 delivery fee</u></b>. Please provide your address after confirming delivery.",
   );
   return await ctx.editMessageText(text, {
     reply_markup: {
