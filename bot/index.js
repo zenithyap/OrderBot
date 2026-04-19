@@ -130,23 +130,28 @@ const sendStartMenu = async (ctx) => {
     selections,
     "Welcome to MorphyOrderBot! Please select which sticker pack you would like!",
   );
-  await ctx.reply("Loading sticker packs...");
+  await ctx.reply("Loading sticker packs and menu...");
   await ctx.sendMediaGroup([
     {
       type: "photo",
       media:
-      "https://order-bot-ruby.vercel.app/images/eeveelutions/eeveelutions.JPG",
+      "https://order-bot-ruby.vercel.app/images/eeveelutions.JPG",
     },
     {
       type: "photo",
       media:
-      "https://order-bot-ruby.vercel.app/images/eeveelutions/about_the_journey.JPG",
+      "https://order-bot-ruby.vercel.app/images/about_the_journey.JPG",
     },
     {
       type: "photo",
       media:
-      "https://order-bot-ruby.vercel.app/images/eeveelutions/life_is_tough.JPG",
+      "https://order-bot-ruby.vercel.app/images/life_is_tough.JPG",
     },
+    {
+      type: "photo",
+      media:
+      "https://order-bot-ruby.vercel.app/images/morphy_menu.JPG",
+    }
   ]);
   await ctx.reply("Here's my telegram handle for contact regarding orders: @zenithyap");
   await ctx.reply(text, startMenu);
