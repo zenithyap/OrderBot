@@ -1,5 +1,5 @@
 const { Telegraf } = require("telegraf");
-const { getPrice } = require("./helper");
+const { getPrice, addOrderSummary, formatGrid } = require("./helper");
 require("dotenv").config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -51,35 +51,6 @@ const menuById = Object.fromEntries(
   Object.values(menu).map((pack) => [pack.id, pack]),
 );
 
-const addOrderSummary = (selections, text) => {
-  const items = Object.entries(selections || {});
-  const totalPrice = getPrice(selections);
-  if (items.length === 0) return text;
-  const orderSummary = items
-    .map(([sticker, qty]) => `- ${sticker}: ${qty} stickers`)
-    .join("\n");
-
-  return `Order Summary:\n${orderSummary}\n\nTotal Price: $${totalPrice.toFixed(2)}\n\n${text}`;
-};
-
-const formatGrid = (gridRow, gridCol, options, packKey) => {
-  const grid = [];
-  for (let i = 0; i < gridRow; i++) {
-    const row = [];
-    for (let j = 0; j < gridCol; j++) {
-      const option = options[i * gridCol + j];
-      if (option) {
-        row.push({
-          text: option.name,
-          callback_data: `select_${option.id}|${packKey}`,
-        });
-      }
-    }
-    grid.push(row);
-  }
-  return grid;
-};
-
 const getMenu = (userId, gridRow, gridCol, options, id, backId) => {
   const inlineKeyboard = formatGrid(gridRow, gridCol, options, id).map((row) =>
     row.map((option) => ({
@@ -122,19 +93,20 @@ const sendStartMenu = async (ctx) => {
     {
       type: "photo",
       media:
-        "https://order-bot-ruby.vercel.app/images/eeveelutions/eeveelutions.JPG",
+      "https://order-bot-ruby.vercel.app/images/eeveelutions/eeveelutions.JPG",
     },
     {
       type: "photo",
       media:
-        "https://order-bot-ruby.vercel.app/images/eeveelutions/about_the_journey.JPG",
+      "https://order-bot-ruby.vercel.app/images/eeveelutions/about_the_journey.JPG",
     },
     {
       type: "photo",
       media:
-        "https://order-bot-ruby.vercel.app/images/eeveelutions/life_is_tough.JPG",
+      "https://order-bot-ruby.vercel.app/images/eeveelutions/life_is_tough.JPG",
     },
   ]);
+  await ctx.reply("Here's my telegram handle for contact regarding orders: @zenithyap");
   await ctx.reply(text, startMenu);
 };
 
@@ -310,11 +282,51 @@ bot.action(/^qty_(\d+)$/, async (ctx) => {
   return await sendStartMenu(ctx);
 });
 
-bot.action("clearOrder", async(ctx) => {
+bot.action("checkout", async (ctx) => {
+  await ctx.answerCbQuery();
+  const selections = userSelections.get(ctx.from.id) || {};
+  const text = addOrderSummary(
+    selections,
+    "Would you like to self collect or have it delivered?\n\nFor meetups, the location will be either at <b><u>Lentor MRT</u></b> for <b><u>weekdays evenings</u></b> and <b><u>Yew tee MRT</u></b> for <b><u>weekends</u></b>. Payment can be settled on the day of meetup.\n\nFor delivery, there will be an <b><u>additional $2 delivery fee</u></b>. Please provide your address after confirming delivery.",
+  );
+  return await ctx.editMessageText(text, {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: "Confirm Meetup 🏃‍♂️",
+            callback_data: "checkout_meetup",
+          },
+          { text: "Confirm Delivery 🚚", callback_data: "checkout_delivery" },
+        ],
+        [{ text: "Back", callback_data: "start" }],
+      ],
+    },
+    parse_mode: "HTML",
+  });
+});
+
+bot.action("checkout_meetup", async (ctx) => {
+  await ctx.answerCbQuery();
+  const selections = userSelections.get(ctx.from.id) || {};
+  const text =
+    "We have received your order! Please message @zenithyap to arrange a meetup time and location. Looking forward to getting these stickers to you! 😊";
+  await bot.telegram.sendMessage(
+    process.env.ORDER_TOPIC_ID,
+    `${addOrderSummary(selections, "Self collect order from @" + ctx.from.username)}`,
+    { message_thread_id: process.env.MESSAGE_THREAD_ID },
+  );
+  userSelections.delete(ctx.from.id);
+  pendingSelections.delete(ctx.from.id);
+  return await ctx.editMessageText(text, startMenu);
+});
+
+bot.action("clearOrder", async (ctx) => {
   await ctx.answerCbQuery();
   userSelections.delete(ctx.from.id);
   pendingSelections.delete(ctx.from.id);
-  const text = "Your order has been cleared. Please select a sticker pack to start again!";
+  const text =
+    "Your order has been cleared. Please select a sticker pack to start again!";
   return await ctx.editMessageText(text, startMenu);
 });
 
