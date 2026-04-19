@@ -1,4 +1,5 @@
 const { Telegraf } = require("telegraf");
+const { getPrice } = require("./helper");
 require("dotenv").config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -52,12 +53,13 @@ const menuById = Object.fromEntries(
 
 const addOrderSummary = (selections, text) => {
   const items = Object.entries(selections || {});
+  const totalPrice = getPrice(selections);
   if (items.length === 0) return text;
   const orderSummary = items
     .map(([sticker, qty]) => `- ${sticker}: ${qty} stickers`)
     .join("\n");
 
-  return `Order Summary:\n${orderSummary}\n\n${text}`;
+  return `Order Summary:\n${orderSummary}\n\nTotal Price: $${totalPrice.toFixed(2)}\n\n${text}`;
 };
 
 const formatGrid = (gridRow, gridCol, options, packKey) => {
@@ -88,7 +90,7 @@ const getMenu = (userId, gridRow, gridCol, options, id, backId) => {
   const selections = userSelections.get(userId) || {};
   if (Object.keys(selections).length > 0) {
     inlineKeyboard.push([
-      { text: "Clear Order 🗑️", callback_data: "clearorder" },
+      { text: "Clear Order 🗑️", callback_data: "clearOrder" },
       { text: "Checkout 🛒", callback_data: "checkout" },
     ]);
   }
@@ -115,19 +117,22 @@ const sendStartMenu = async (ctx) => {
     selections,
     "Welcome to MorphyOrderBot! Please select which sticker pack you would like!",
   );
-  await ctx.reply("Loading sticker packs...")
+  await ctx.reply("Loading sticker packs...");
   await ctx.sendMediaGroup([
     {
       type: "photo",
-      media: "https://order-bot-ruby.vercel.app/images/eeveelutions/eeveelutions.JPG",
+      media:
+        "https://order-bot-ruby.vercel.app/images/eeveelutions/eeveelutions.JPG",
     },
     {
       type: "photo",
-      media: "https://order-bot-ruby.vercel.app/images/eeveelutions/about_the_journey.JPG",
+      media:
+        "https://order-bot-ruby.vercel.app/images/eeveelutions/about_the_journey.JPG",
     },
     {
       type: "photo",
-      media: "https://order-bot-ruby.vercel.app/images/eeveelutions/life_is_tough.JPG",
+      media:
+        "https://order-bot-ruby.vercel.app/images/eeveelutions/life_is_tough.JPG",
     },
   ]);
   await ctx.reply(text, startMenu);
@@ -272,7 +277,10 @@ bot.action(/^qty_(\d+)$/, async (ctx) => {
   const selection = pendingSelections.get(ctx.from.id);
   const selections = userSelections.get(ctx.from.id) || {};
   if (!selection || !selection.item) {
-    return await ctx.reply("Please select a sticker first.");
+    return await ctx.editMessageText(
+      "No item selected. Please select a sticker pack to start ordering.",
+      startMenu,
+    );
   }
 
   if (qty === 0) {
@@ -302,13 +310,15 @@ bot.action(/^qty_(\d+)$/, async (ctx) => {
   return await sendStartMenu(ctx);
 });
 
-bot.command("clearorder", async (ctx) => {
+bot.action("clearOrder", async(ctx) => {
+  await ctx.answerCbQuery();
   userSelections.delete(ctx.from.id);
   pendingSelections.delete(ctx.from.id);
-  return await ctx.reply("Your order has been cleared.");
+  const text = "Your order has been cleared. Please select a sticker pack to start again!";
+  return await ctx.editMessageText(text, startMenu);
 });
 
 bot.start(sendStartMenu);
-// bot.launch(); // Removed for Vercel serverless compatibility - using webhooks instead
+bot.launch(); // Removed for Vercel serverless compatibility - using webhooks instead
 
 module.exports = bot;
