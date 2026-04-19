@@ -350,12 +350,17 @@ bot.action("checkout", async (ctx) => {
 
 bot.action("checkout_meetup", async (ctx) => {
   await ctx.answerCbQuery();
+  const username = ctx.from.username ||  "";
+  const firstName = ctx.from.first_name;
+  const lastName = ctx.from.last_name || "";
+  const fullName = `${firstName} ${lastName}`.trim();
+
   const selections = userSelections.get(ctx.from.id) || {};
   const text =
     "We have received your order! Please message @zenithyap to arrange a meetup time and location. Looking forward to getting these stickers to you! 😊";
   await bot.telegram.sendMessage(
     process.env.ORDER_TOPIC_ID,
-    `${addOrderSummary(selections, "Self collect order from @" + ctx.from.username)}`,
+    `${addOrderSummary(selections, "Self collect order from " + fullName + " @" + ctx.from.username)}`,
     { message_thread_id: process.env.MESSAGE_THREAD_ID },
   );
   userSelections.delete(ctx.from.id);
